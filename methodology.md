@@ -1,0 +1,25 @@
+# Contribution extent and contextual quality
+
+## Two analytical questions
+
+The causal design asks how changes in AI availability affect public contributions. The predictive model asks how well repository, maintainer, and contribution features discriminate merge outcomes. Strong predictive performance alone cannot answer the causal question.
+
+## Extent model
+
+The manuscript uses Poisson pseudo-maximum likelihood with total lines changed as the outcome and pull-request count as exposure. The log of positive pull-request count enters as an offset with coefficient fixed to one. The fitted mean is PR_count multiplied by an exponential function of developer effects, week effects, treatment, and controls.
+
+This identifies an effect on expected lines per pull request conditional on contributing. It is not equivalent to an OLS regression on a precomputed ratio. Developer-weeks with zero pull requests cannot enter this log-exposure specification. The manuscript reports an incidence-rate ratio of 0.522 for extent, approximately a 48% decrease during the ban.
+
+## Predictive quality measurement
+
+The completed XGBoost analysis achieved 0.82 AUC versus 0.61 for a repository-level base rate. The public example illustrates a baseline calculated on training data and an explicitly supplied holdout. These are representative engineering choices; the original split design, hyperparameters, calibration results, and exact adjustment formula are not supplied in this release.
+
+AUC measures ranking, not the proportion classified correctly. Calibration matters if probabilities are used in a difficulty adjustment. A residual of observed acceptance minus predicted acceptance is shown only as an illustrative adjustment; it is not asserted to be the proprietary research formula. Merge outcomes reflect context as well as quality and should not be labeled direct correctness tests.
+
+## Contribution archetypes
+
+The completed research identified four structural archetypes using K-Means. The sample illustrates log transformation, scaling, and four-cluster fitting, retaining preprocessing for new observations. Feature choices and cluster names are not reconstructed as empirical facts.
+
+## Interpretation
+
+The manuscript's accuracy measure changed by approximately 1.1% during the ban, with p < 0.1 in the reported discussion. A small estimate is not proof of no change. The manuscript estimate and the resume's predictive evaluation describe different analytical outputs; this release does not claim the displayed residual formula generated the manuscript's accuracy result.
