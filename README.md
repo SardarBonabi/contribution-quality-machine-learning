@@ -55,6 +55,8 @@ The contribution is to combine **behavioral measurement, contextual predictive m
 
 ## Explore the work
 
+> **Research status and code availability:** The research is currently under review. The full research code and data are proprietary and are not distributed here. The public code consists only of selected, simplified samples of the general workflow; it is not the complete research implementation or a replication package.
+
 | Sample | What it demonstrates |
 |---|---|
 | [Quality model](quality_model.py) | Representative XGBoost workflow, held-out evaluation, and a train-only repository baseline |
