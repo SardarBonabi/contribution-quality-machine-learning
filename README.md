@@ -2,77 +2,39 @@
 
 # Are AI Users Producing More Work—or Better Work?
 
-Separating output volume from contribution quality when evaluating an AI tool.
+A quasi-experiment on AI's impact on contribution size and quality, supported by machine learning and behavioral segmentation.
 
-**Product evaluation · XGBoost · Baseline comparison · Causal inference**
+**Quasi-experimentation · Causal inference · XGBoost · Difficulty-adjusted quality · K-Means**
 
-[Decision](#the-product-decision) · [Results](#results-and-interpretation) · [Approach](#analytical-approach) · [Code](#explore-the-implementation)
+[Overview](#project-overview) · [Experiment](#quasi-experimental-design) · [Impact](#impact-on-contribution-outcomes) · [ML](#machine-learning-for-quality-and-segmentation) · [Code](#explore-the-implementation)
 
 </div>
 
-## The product decision
+## Project overview
 
-**How should a team evaluate an AI tool when more output does not necessarily mean better outcomes?**
+**I used a quasi-experiment to estimate how an AI product affects the size and quality of user contributions, then examined differences across users. I used machine learning to account for acceptance context and characterize contribution patterns.**
 
-A developer product can increase the amount of code users submit without improving its usefulness. Acceptance rates add another signal, but they also reflect repository expectations and maintainer decisions. Comparing raw rates across different contexts can misrepresent performance.
+Italy's temporary ChatGPT suspension created an external change in product access. I compared developer outcomes in Italy with outcomes in France and Portugal to estimate the response to lost access.
 
-I separated the amount of work per contribution from acceptance-related quality. I combined causal analysis of an interruption in ChatGPT access with predictive modeling of merge outcomes to account for differences in contribution context.
+The central question is whether AI changes **how much users contribute and the quality of those contributions**. **XGBoost-based quality measurement** and **K-Means segmentation** complement the causal analysis by addressing contextual differences in acceptance and structural differences between contributions.
 
-## Results and interpretation
+## Quasi-experimental design
 
-<table>
-<tr><th align="left">Contribution size</th><th align="left">Predictive discrimination</th><th align="left">Behavioral segmentation</th></tr>
-<tr>
-<td valign="top"><h2>~48% lower</h2>Lines changed per pull request during lost access<br><sub>Conditional on positive pull-request activity</sub></td>
-<td valign="top"><h2>0.82 AUC</h2>XGBoost versus 0.61 repository baseline<br><sub>Ranking merge outcomes</sub></td>
-<td valign="top"><h2>4 groups</h2>Structural contribution archetypes<br><sub>K-Means segmentation</sub></td>
-</tr>
-</table>
+| Design element | Implementation |
+|---|---|
+| Product and external event | ChatGPT's temporary access suspension in Italy |
+| Treatment group | Developers in Italy |
+| Comparison group | Developers in France and Portugal |
+| Causal approach | Matched difference-in-differences |
+| Contribution-size model | Poisson pseudo-maximum likelihood with developer and week effects and PR-count exposure |
+| Outcomes | Contribution extent and accuracy-related outcomes |
+| Heterogeneity | Differences by developer experience |
 
-**The key distinction:** the causal estimate measures a response to changed access; AUC measures predictive ranking. They answer different questions and should not be combined into a single product-impact claim.
+The treatment measures a change in country-level availability, not observed individual AI use. This was a naturally occurring access interruption, not a randomized rollout.
 
-The manuscript's accuracy-related measure increased approximately **1.1% during the suspension**, with marginal statistical significance at the 10% level. That small movement is not proof that quality was unchanged. The effect on contribution size was similar across experience groups.
+### Estimate contribution size conditional on contributing
 
-## How this would inform a product evaluation
-
-| Decision | Application of the analysis | What is still needed |
-|---|---|---|
-| Choose success metrics | Track contribution size and quality-related outcomes separately | Direct measures of correctness, usefulness, and downstream user value |
-| Compare performance across contexts | Account for repository and maintainer differences before interpreting acceptance rates | Validation of the adjustment for the target population |
-| Evaluate a prediction model | Compare against a meaningful baseline, not only a standalone score | Calibration and decision-specific costs before using probabilities operationally |
-| Understand behavioral changes | Examine contribution types as well as overall averages | Validation that segments remain useful in the intended product setting |
-
-These are proposed applications. The work does not establish a production deployment, automated acceptance policy, or a commercial ROI result.
-
-## Analytical approach
-
-### 1. Separate activity volume, contribution size, and quality
-
-| Measurement | What it answers | What it does not establish |
-|---|---|---|
-| Pull-request count | How often users contribute | How substantial or useful the contributions are |
-| Lines changed per pull request | How large contributions are | Correctness or value of the code |
-| Merge outcome | Whether work was accepted in its context | A direct, context-free test of quality |
-| Difficulty-adjusted quality metric | How to account for contextual acceptance difficulty | That all remaining differences are intrinsic quality |
-
-I organized repository-, maintainer-, and contribution-level features and developed an **XGBoost merge-probability model**. It achieved **0.82 AUC versus 0.61 for a repository-level base-rate baseline**. AUC reflects discrimination, not classification accuracy or calibrated probabilities.
-
-### 2. Account for context in quality measurement
-
-I used the predictive model to develop a difficulty-adjusted quality metric. The objective was to avoid treating raw merge rates as directly comparable when acceptance conditions differ.
-
-<details>
-<summary><strong>Predictive evaluation and public sample boundaries</strong></summary>
-
-The public example demonstrates a baseline computed on training data and an explicitly supplied holdout. These are representative engineering choices. The original split design, hyperparameters, calibration results, and exact adjustment formula are not included in this release.
-
-The displayed residual of observed acceptance minus predicted acceptance is an illustrative adjustment, not the proprietary research formula. The repository does not claim that this residual generated the manuscript's accuracy estimate. Calibration would need to be assessed before interpreting predicted probabilities as an operational adjustment.
-
-</details>
-
-### 3. Estimate the response to changed AI access
-
-I applied **matched difference-in-differences**, using Italy's temporary ChatGPT suspension and developers in France and Portugal as comparisons. For contribution size, the **Poisson pseudo-maximum-likelihood model** uses total lines changed as the outcome and pull-request count as exposure.
+I modeled total lines changed with pull-request count as exposure:
 
 ```text
 E[total_lines_it | X] = PR_count_it × exp(
@@ -80,34 +42,79 @@ E[total_lines_it | X] = PR_count_it × exp(
 )
 ```
 
-The log of positive pull-request count enters as an offset with coefficient fixed to one. The reported incidence-rate ratio of **0.522** corresponds to approximately 48% fewer expected lines per pull request. This is conditional on developer-weeks with positive PR activity; it is not 48% fewer pull requests or 48% lower overall productivity. A count model with exposure is also different from ordinary least squares on a precomputed ratio.
+The log of positive PR count enters as an offset with coefficient fixed to one. This estimates changes in expected lines per pull request among developer-weeks with positive PR activity. It differs from ordinary least squares on a precomputed ratio and excludes zero-PR weeks from this specification.
 
-### 4. Describe the types of contributions users make
+## Impact on contribution outcomes
 
-I applied **K-Means to structural pull-request features**, identifying four contribution archetypes. This adds a behavioral view to the size and acceptance measures. The representative sample illustrates transformation, scaling, and clustering; empirical cluster names and proprietary feature settings are not reconstructed.
+| Estimated response during lost access | Interpretation |
+|---|---|
+| **Approximately 48% fewer lines changed per pull request** | Contributions became smaller conditional on positive PR activity; the reported incidence-rate ratio is 0.522 |
+| **Approximately 1.1% increase in the manuscript's accuracy measure** | A smaller movement, with marginal statistical significance at the 10% level |
+| **Similar extent effects across experience groups** | The contribution-size response was not confined to one experience group |
+
+The 48% estimate is not a decline in PR count or overall productivity. The smaller accuracy estimate does not prove that quality was unchanged. **Product impact differed across outcome dimensions:** a large movement in contribution size was accompanied by a much smaller movement in the accuracy-related measure.
+
+## Machine learning for quality and segmentation
+
+### **XGBoost: model acceptance in context**
+
+**I developed an XGBoost merge-probability model using repository-, maintainer-, and contribution-level features. It achieved 0.82 AUC compared with 0.61 for a repository-level base-rate baseline.**
+
+<table>
+<tr><th align="left">XGBoost</th><th align="left">Repository baseline</th><th align="left">Structural segmentation</th></tr>
+<tr><td><h2>0.82 AUC</h2>Merge-outcome discrimination</td><td><h2>0.61 AUC</h2>Repository-level base rate</td><td><h2>4 archetypes</h2>K-Means contribution groups</td></tr>
+</table>
+
+Merge outcomes depend on context as well as quality. The model captures differences in acceptance conditions instead of treating all repositories and contributions as interchangeable. AUC measures ranking performance; it is neither a classification-accuracy percentage nor a causal product effect.
+
+### **Difficulty-adjusted quality: account for acceptance conditions**
+
+**I used the predictive model to develop a difficulty-adjusted quality metric.** The purpose was to account for variation in acceptance difficulty when evaluating contributions, rather than directly comparing raw merge rates across contexts.
+
+The proprietary adjustment formula is not distributed. The public sample's observed-minus-predicted residual is illustrative and is not claimed to have generated the manuscript's accuracy result. The predictive evaluation and the quasi-experimental accuracy estimate are distinct analytical outputs.
+
+### **K-Means: identify contribution archetypes**
+
+**I applied K-Means to structural pull-request features and identified four contribution archetypes.** This describes how contributions differ in form and complements the experience-based heterogeneity analysis. Clusters describe patterns; they do not themselves identify causal treatment effects.
+
+The public sample demonstrates transformation, scaling, and clustering. Original feature settings and empirical cluster names are not reconstructed as facts.
 
 ```mermaid
 flowchart LR
-    A["Contribution and context"] --> B["Size: lines with PR exposure"]
-    A --> C["Acceptance: XGBoost and baseline"]
-    A --> D["Structure: four archetypes"]
-    B --> E["Separate quantity from quality"]
-    C --> E
-    D --> E
-    style A fill:#eef2f6,stroke:#64748b,color:#172033
+    A["Changed AI access"] --> B["Matched causal comparison"]
+    B --> C["Contribution size and accuracy effects"]
+    D["Contribution and repository context"] --> E["XGBoost: merge probability"]
+    E --> F["Difficulty-adjusted quality"]
+    D --> G["K-Means: contribution archetypes"]
+    style A fill:#e8effa,stroke:#45658d,color:#172033
     style B fill:#eef2f6,stroke:#64748b,color:#172033
-    style C fill:#eef2f6,stroke:#64748b,color:#172033
+    style C fill:#e8effa,stroke:#45658d,color:#172033
     style D fill:#eef2f6,stroke:#64748b,color:#172033
     style E fill:#e8effa,stroke:#45658d,color:#172033
+    style F fill:#eef2f6,stroke:#64748b,color:#172033
+    style G fill:#e8effa,stroke:#45658d,color:#172033
 ```
 
-## What I owned and delivered
+<details>
+<summary><strong>ML evaluation and representative-code scope</strong></summary>
 
-I led metric definition, feature engineering, predictive modeling, baseline comparison, difficulty adjustment, segmentation, causal estimation, and interpretation. The project uses the shared developer-activity infrastructure supporting the related productivity and engagement analyses.
+The public example uses a training-only repository baseline and an explicitly supplied holdout. These are representative engineering choices, not claims about the original split design. Original hyperparameters, calibration results, and the exact adjustment formula are not supplied.
 
-The deliverable is a framework for evaluating **output and quality separately while accounting for context**. Its strongest practical lesson is to define what “better” means before interpreting a larger activity metric or a stronger model score as product success.
+Strong discrimination alone does not establish calibration. Calibration would need to be assessed before interpreting probabilities operationally. Merge outcomes also reflect project fit and maintainer decisions, so the adjustment is not a direct correctness test.
 
-The access interruption is a specific setting, individual AI use is not directly observed, and merge outcomes remain an imperfect quality proxy. These boundaries matter when transferring the findings to another product or user population.
+</details>
+
+## What the results tell a product team
+
+The analysis distinguishes **effects on contribution size, effects on accuracy-related outcomes, and differences across users**. It shows why a product's impact on output should not automatically be interpreted as an equivalent impact on quality.
+
+The ML work adds contextual measurement and a description of contribution types. It does not replace the quasi-experiment or turn predictive performance into evidence of product impact. Retention, revenue, automated acceptance decisions, and commercial deployment were outside this analysis.
+
+## My contribution and interpretation boundaries
+
+I led outcome definition, feature engineering, **XGBoost modeling and baseline evaluation**, **difficulty adjustment**, **K-Means segmentation**, causal estimation, and interpretation. The project uses the shared developer-activity infrastructure supporting the related studies.
+
+The causal interpretation depends on the comparison group representing the counterfactual trend. Matching does not eliminate unobserved differential shocks. Results apply to this access interruption, and the contribution-size estimate is conditional on contributing. These distinctions matter when applying the findings to a different AI product or user population.
 
 ## Explore the implementation
 
@@ -123,7 +130,7 @@ The access interruption is a specific setting, individual AI use is not directly
 <details>
 <summary><strong>Research source and sample scope</strong></summary>
 
-This case study presents my contributions to collaborative doctoral research at UC Irvine, framed around the product decisions the analysis can inform. The underlying study is *Generative AI and Public Knowledge Work*. Product applications described here are proposed uses of the evidence, not claims of a commercial deployment or a tested product rollout.
+This case study presents my contributions to collaborative doctoral research at UC Irvine, focused on quasi-experimental product impact analysis. The underlying study is *Generative AI and Public Knowledge Work*.
 
 Public files include selected refactored examples and representative reconstructions. They do not reproduce the research estimates. See [code provenance and scope](code-notes.md).
 
