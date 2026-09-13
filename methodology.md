@@ -1,5 +1,7 @@
 # Contribution extent and contextual quality
 
+> **Research status:** The research is under review. Full code and data remain proprietary; public code illustrates the general workflow only.
+
 ## Two analytical questions
 
 The causal design asks how changes in AI availability affect public contributions. The predictive model asks how well repository, maintainer, and contribution features discriminate merge outcomes. Strong predictive performance alone cannot answer the causal question.
@@ -15,6 +17,20 @@ This identifies an effect on expected lines per pull request conditional on cont
 The completed XGBoost analysis achieved 0.82 AUC versus 0.61 for a repository-level base rate. The public example illustrates a baseline calculated on training data and an explicitly supplied holdout. These are representative engineering choices; the original split design, hyperparameters, calibration results, and exact adjustment formula are not supplied in this release.
 
 AUC measures ranking, not the proportion classified correctly. Calibration matters if probabilities are used in a difficulty adjustment. A residual of observed acceptance minus predicted acceptance is shown only as an illustrative adjustment; it is not asserted to be the proprietary research formula. Merge outcomes reflect context as well as quality and should not be labeled direct correctness tests.
+
+### Training context and the causal question
+
+**The XGBoost quality model used a separate sample from the pre-treatment period**, as described in the product-focused resume. Its repository-, maintainer-, and contribution-level features support measurement of acceptance difficulty before the access interruption.
+
+This timing separates learning acceptance patterns from the subsequent treatment-period response. It does not, by itself, establish calibration or rule out every form of leakage. Exact split boundaries, entity overlap, and tuning procedures are not supplied, so the public example should not be treated as a reconstruction of those details.
+
+| Analytical component | Question answered | Reported evidence |
+|---|---|---|
+| **XGBoost merge-probability model** | How well do contextual features rank merge outcomes? | **0.82 AUC versus 0.61 repository baseline** |
+| **Difficulty-adjusted quality metric** | How can acceptance context be accounted for in quality measurement? | Completed measurement work; proprietary formula withheld |
+| Quasi-experimental outcome analysis | How did outcomes respond to the access interruption? | Separate causal estimates, subject to the comparison-group assumptions |
+
+The AUC comparison evaluates predictive discrimination. It is not the treatment effect, and the illustrative residual in the public code is not asserted to produce the manuscript's accuracy estimate.
 
 ## Contribution archetypes
 
