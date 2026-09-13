@@ -20,7 +20,7 @@ AUC measures ranking, not the proportion classified correctly. Calibration matte
 
 ### Training context and the causal question
 
-**The XGBoost quality model used a separate sample from the pre-treatment period**, as described in the product-focused resume. Its repository-, maintainer-, and contribution-level features support measurement of acceptance difficulty before the access interruption.
+**The XGBoost quality model used a separate sample from the pre-treatment period**. Its repository-, maintainer-, and contribution-level features support measurement of acceptance difficulty before the access interruption.
 
 This timing separates learning acceptance patterns from the subsequent treatment-period response. It does not, by itself, establish calibration or rule out every form of leakage. Exact split boundaries, entity overlap, and tuning procedures are not supplied, so the public example should not be treated as a reconstruction of those details.
 
@@ -38,4 +38,4 @@ The completed research identified four structural archetypes using K-Means. The 
 
 ## Interpretation
 
-The manuscript's accuracy measure changed by approximately 1.1% during the ban, with p < 0.1 in the reported discussion. A small estimate is not proof of no change. The manuscript estimate and the resume's predictive evaluation describe different analytical outputs; this release does not claim the displayed residual formula generated the manuscript's accuracy result.
+The manuscript's accuracy measure changed by approximately 1.1% during the ban, with p < 0.1 in the reported discussion. A small estimate is not proof of no change. The causal estimate and predictive evaluation describe different analytical outputs; this release does not claim the displayed residual formula generated the manuscript's accuracy result.

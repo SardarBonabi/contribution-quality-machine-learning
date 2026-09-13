@@ -1,11 +1,11 @@
 # Sample code and provenance
 
-The research accomplishments are described from Sardar Fatooreh Bonabi's account of his completed work. The manuscripts provide study context and findings. This release selectively illustrates methods without distributing the full proprietary implementations.
+This release presents selected research workflows without distributing the full proprietary implementations.
 
 | File | Relationship to the research |
 |---|---|
-| quality_model.py | Representative reconstruction of the XGBoost approach described in the resume. Hyperparameters and residual adjustment are illustrative. |
-| contribution_archetypes.py | Reconstructed four-cluster workflow based on the resume; no empirical cluster names or membership are supplied. |
+| quality_model.py | Representative reconstruction of the XGBoost approach. Hyperparameters and residual adjustment are illustrative. |
+| contribution_archetypes.py | Reconstructed four-cluster workflow; no empirical cluster names or membership are supplied. |
 | extent_model.py | Representative preparation and declarative specification of the manuscript's exposure model. |
 
 ## What was refactored

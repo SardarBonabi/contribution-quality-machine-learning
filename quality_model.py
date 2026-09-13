@@ -1,4 +1,4 @@
-"""Representative reconstruction of the resume-described quality model.
+"""Representative reconstruction of the quality model.
 
 Feature names, hyperparameters, and residual formula are illustrative choices,
 not the original research specification. No research performance is reproduced.

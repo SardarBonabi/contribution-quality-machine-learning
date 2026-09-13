@@ -1,4 +1,4 @@
-"""Representative four-cluster structural segmentation, based on the resume.
+"""Representative four-cluster structural segmentation.
 
 This compact example does not recover the original feature set or cluster labels.
 The fitted preprocessing is retained for consistent assignment of new records.
