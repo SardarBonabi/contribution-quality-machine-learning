@@ -122,6 +122,7 @@ The causal interpretation depends on the comparison group representing the count
 
 | Sample | What to inspect |
 |---|---|
+| [Modular data collection](data-collection.md) | Study-specific collection stages, multithreading, validation, PostgreSQL persistence, and recovery |
 | [Quality model](quality_model.py) | Representative XGBoost workflow, holdout, and training-only baseline |
 | [Contribution archetypes](contribution_archetypes.py) | Structural features, scaling, and four-cluster fitting |
 | [Exposure specification](extent_model.py) | Total lines, PR exposure, and conditional sample |
