@@ -9,6 +9,8 @@ import pandas as pd
 from sklearn.metrics import roc_auc_score
 from xgboost import XGBClassifier
 
+from quality_baseline import fit_repository_baseline, validate_repository_ids
+
 
 def evaluate_merge_model(train: pd.DataFrame, evaluation: pd.DataFrame, features: list[str]):
     """Compare XGBoost with a repository base rate learned only on train.
@@ -17,7 +19,14 @@ def evaluate_merge_model(train: pd.DataFrame, evaluation: pd.DataFrame, features
     post-decision fields and target-derived leakage. Split by time or repository
     to match the intended generalization question, and tune without this holdout.
     """
+    if not features or len(features) != len(set(features)):
+        raise ValueError("Select a nonempty list of unique feature names")
     for frame in (train, evaluation):
+        if not frame.columns.is_unique:
+            raise ValueError("Input columns must be unique")
+        if not {"merged", "repository", *features}.issubset(frame.columns):
+            raise ValueError("Input is missing required columns")
+        validate_repository_ids(frame["repository"])
         if not frame["merged"].isin([0, 1]).all() or frame["merged"].nunique() != 2:
             raise ValueError("AUC requires both binary outcome classes")
     if {"merged", "repository"}.intersection(features):
@@ -28,8 +37,8 @@ def evaluate_merge_model(train: pd.DataFrame, evaluation: pd.DataFrame, features
     )
     model.fit(train[features], train["merged"])
     probability = model.predict_proba(evaluation[features])[:, 1]
-    base_rates = train.groupby("repository")["merged"].mean()
-    baseline = evaluation["repository"].map(base_rates).fillna(train["merged"].mean())
+    baseline_model = fit_repository_baseline(train)
+    baseline = baseline_model.predict(evaluation["repository"])
     metrics = {
         "model_auc": roc_auc_score(evaluation["merged"], probability),
         "repository_baseline_auc": roc_auc_score(evaluation["merged"], baseline),
