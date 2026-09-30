@@ -1,5 +1,9 @@
-"""PPML exposure specification for contribution extent; estimator omitted."""
+"""Representative PPML exposure preparation; estimator omitted.
+
+Research is under review; full research code and data remain proprietary.
+"""
 import numpy as np
+from pandas.api.types import is_numeric_dtype, is_complex_dtype
 
 
 def prepare_extent_sample(panel):
@@ -9,8 +13,16 @@ def prepare_extent_sample(panel):
     claim an equivalent OLS model. The offset coefficient must be constrained to 1.
     """
     columns = ["total_lines_changed", "pull_requests"]
-    if panel[columns].isna().any().any() or panel[columns].lt(0).any().any():
-        raise ValueError("Counts must be observed and nonnegative")
+    if not panel.columns.is_unique or not set(columns).issubset(panel.columns):
+        raise ValueError("Expected unique columns and required counts")
+    for name in columns:
+        values = panel[name]
+        if not is_numeric_dtype(values.dtype) or is_complex_dtype(values.dtype):
+            raise ValueError("Counts must be real numeric values")
+        if values.isna().any() or not np.isfinite(values).all() or values.lt(0).any():
+            raise ValueError("Counts must be observed, finite and nonnegative")
+    if (panel["pull_requests"].eq(0) & panel["total_lines_changed"].gt(0)).any():
+        raise ValueError("Positive changed lines require positive PR exposure")
     result = panel.loc[panel["pull_requests"].gt(0)].copy()
     result["log_pr_exposure"] = np.log(result["pull_requests"])
     return result
