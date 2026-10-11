@@ -4,10 +4,8 @@ Feature names, hyperparameters, and residual formula are illustrative choices,
 not the original research specification. No research performance is reproduced.
 Caller supplies an explicitly held-out evaluation set and training-only features.
 """
-import numpy as np
 import pandas as pd
-from sklearn.metrics import roc_auc_score
-from xgboost import XGBClassifier
+from quality_adjustment import illustrative_acceptance_residual
 
 from quality_baseline import fit_repository_baseline, validate_repository_ids
 
@@ -31,6 +29,9 @@ def evaluate_merge_model(train: pd.DataFrame, evaluation: pd.DataFrame, features
             raise ValueError("AUC requires both binary outcome classes")
     if {"merged", "repository"}.intersection(features):
         raise ValueError("Exclude target and raw repository ID from features")
+    from sklearn.metrics import roc_auc_score
+    from xgboost import XGBClassifier
+
     model = XGBClassifier(
         n_estimators=100, max_depth=3, learning_rate=0.05,
         objective="binary:logistic", eval_metric="logloss", random_state=42,
@@ -45,16 +46,3 @@ def evaluate_merge_model(train: pd.DataFrame, evaluation: pd.DataFrame, features
     }
     return model, metrics, probability
 
-
-def illustrative_acceptance_residual(observed, predicted_probability):
-    """One possible adjustment, not the recovered research quality metric.
-
-    Positive means accepted more than predicted. Use out-of-sample probabilities;
-    interpretation requires calibration checks and is not direct code correctness.
-    """
-    observed, predicted = np.asarray(observed), np.asarray(predicted_probability)
-    if observed.shape != predicted.shape or not np.isin(observed, [0, 1]).all():
-        raise ValueError("Expected equally shaped binary outcomes and probabilities")
-    if not np.isfinite(predicted).all() or ((predicted < 0) | (predicted > 1)).any():
-        raise ValueError("Invalid probabilities")
-    return observed - predicted
