@@ -6,6 +6,8 @@ reproduce research results or distribute the original model implementation.
 from dataclasses import dataclass
 from types import MappingProxyType
 from typing import Mapping
+from numbers import Real
+from math import isfinite
 
 import pandas as pd
 
@@ -20,6 +22,17 @@ def validate_repository_ids(repositories: pd.Series) -> None:
 class RepositoryBaseline:
     rates: Mapping[object, float]
     global_rate: float
+
+    def __post_init__(self):
+        """Snapshot caller-owned rates and reject invalid probability state."""
+        rates = dict(self.rates)
+        for rate in [self.global_rate, *rates.values()]:
+            if isinstance(rate, bool) or not isinstance(rate, Real) or not isfinite(rate) or not 0 <= rate <= 1:
+                raise ValueError("Baseline probabilities must be finite and between zero and one")
+        if pd.Series(list(rates), dtype=object).isna().any():
+            raise ValueError("Repository identifiers must not be missing")
+        object.__setattr__(self, "rates", MappingProxyType(rates))
+        object.__setattr__(self, "global_rate", float(self.global_rate))
 
     def predict(self, repositories: pd.Series) -> pd.Series:
         """Keep row order/index; unseen repositories use the training global rate.
