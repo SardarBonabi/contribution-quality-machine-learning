@@ -28,7 +28,9 @@ class RepositoryBaseline:
         the fitted statistics. Missing identifiers are not unseen repositories.
         """
         validate_repository_ids(repositories)
-        return repositories.map(self.rates).fillna(self.global_rate).astype(float)
+        # Object identifiers prevent categorical mapping from producing a categorical
+        # probability series that cannot accept the global fallback value.
+        return repositories.astype(object).map(self.rates).fillna(self.global_rate).astype(float)
 
 
 def fit_repository_baseline(train: pd.DataFrame) -> RepositoryBaseline:
