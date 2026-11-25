@@ -7,7 +7,8 @@ Caller supplies an explicitly held-out evaluation set and training-only features
 import pandas as pd
 from quality_adjustment import illustrative_acceptance_residual
 
-from quality_baseline import fit_repository_baseline, validate_repository_ids
+from quality_baseline import fit_repository_baseline
+from quality_inputs import validate_model_inputs
 
 
 def evaluate_merge_model(train: pd.DataFrame, evaluation: pd.DataFrame, features: list[str]):
@@ -17,18 +18,7 @@ def evaluate_merge_model(train: pd.DataFrame, evaluation: pd.DataFrame, features
     post-decision fields and target-derived leakage. Split by time or repository
     to match the intended generalization question, and tune without this holdout.
     """
-    if not features or len(features) != len(set(features)):
-        raise ValueError("Select a nonempty list of unique feature names")
-    for frame in (train, evaluation):
-        if not frame.columns.is_unique:
-            raise ValueError("Input columns must be unique")
-        if not {"merged", "repository", *features}.issubset(frame.columns):
-            raise ValueError("Input is missing required columns")
-        validate_repository_ids(frame["repository"])
-        if not frame["merged"].isin([0, 1]).all() or frame["merged"].nunique() != 2:
-            raise ValueError("AUC requires both binary outcome classes")
-    if {"merged", "repository"}.intersection(features):
-        raise ValueError("Exclude target and raw repository ID from features")
+    validate_model_inputs(train, evaluation, features)
     from sklearn.metrics import roc_auc_score
     from xgboost import XGBClassifier
 
