@@ -10,6 +10,7 @@ from quality_adjustment import illustrative_acceptance_residual
 from quality_baseline import fit_repository_baseline
 from quality_inputs import validate_model_inputs
 from holdout_checks import validate_observation_split
+from quality_metrics import compare_probabilities
 
 
 def evaluate_merge_model(train: pd.DataFrame, evaluation: pd.DataFrame, features: list[str],
@@ -26,7 +27,6 @@ def evaluate_merge_model(train: pd.DataFrame, evaluation: pd.DataFrame, features
         if observation_key in features:
             raise ValueError("Exclude the observation identifier from model features")
         validate_observation_split(train, evaluation, observation_key)
-    from sklearn.metrics import roc_auc_score
     from xgboost import XGBClassifier
 
     model = XGBClassifier(
@@ -37,9 +37,6 @@ def evaluate_merge_model(train: pd.DataFrame, evaluation: pd.DataFrame, features
     probability = model.predict_proba(evaluation[features])[:, 1]
     baseline_model = fit_repository_baseline(train)
     baseline = baseline_model.predict(evaluation["repository"])
-    metrics = {
-        "model_auc": roc_auc_score(evaluation["merged"], probability),
-        "repository_baseline_auc": roc_auc_score(evaluation["merged"], baseline),
-    }
+    metrics = compare_probabilities(evaluation["merged"], probability, baseline)
     return model, metrics, probability
 
