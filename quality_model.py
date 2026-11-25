@@ -9,16 +9,23 @@ from quality_adjustment import illustrative_acceptance_residual
 
 from quality_baseline import fit_repository_baseline
 from quality_inputs import validate_model_inputs
+from holdout_checks import validate_observation_split
 
 
-def evaluate_merge_model(train: pd.DataFrame, evaluation: pd.DataFrame, features: list[str]):
+def evaluate_merge_model(train: pd.DataFrame, evaluation: pd.DataFrame, features: list[str],
+                         *, observation_key: str | None = None):
     """Compare XGBoost with a repository base rate learned only on train.
 
     merged is binary. Features must be known before the merge decision; exclude
     post-decision fields and target-derived leakage. Split by time or repository
     to match the intended generalization question, and tune without this holdout.
+    Supply observation_key to check record-level uniqueness and split disjointness.
     """
     validate_model_inputs(train, evaluation, features)
+    if observation_key is not None:
+        if observation_key in features:
+            raise ValueError("Exclude the observation identifier from model features")
+        validate_observation_split(train, evaluation, observation_key)
     from sklearn.metrics import roc_auc_score
     from xgboost import XGBClassifier
 
